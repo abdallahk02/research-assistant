@@ -1,0 +1,15 @@
+# Node
+frontend/node_modules
+frontend/.next
+
+# Python
+backend/.venv
+
+# Environment Variables
+backend/.env
+
+# IDE
+.vscode
+
+# Docker
+postgres_data/
