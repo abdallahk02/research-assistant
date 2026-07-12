@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useEffect } from 'react';
 import { Document, Page, pdfjs } from "react-pdf";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -17,6 +18,7 @@ export default function PdfViewer({ file }: Props) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
 
   function onDocumentLoadSuccess({
     numPages,
@@ -34,6 +36,28 @@ export default function PdfViewer({ file }: Props) {
     setLoading(false);
     setError("Unable to load PDF.");
   }
+
+  useEffect(() => {
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === "ArrowRight") {
+      if (numPages && pageNumber < numPages) {
+        setPageNumber(pageNumber + 1);
+      }
+    }
+
+    if (event.key === "ArrowLeft") {
+      if (pageNumber > 1) {
+        setPageNumber(pageNumber - 1);
+      }
+    }
+  }
+
+  window.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+  };
+  }, [pageNumber, numPages]);
 
   if (!file) {
     return (
@@ -70,14 +94,39 @@ export default function PdfViewer({ file }: Props) {
         onSourceSuccess={() => setLoading(true)}
       >
         <Page
-          pageNumber={1}
+          pageNumber={pageNumber}
           width={700}
         />
       </Document>
+      <div>
+        <button
+        disabled={pageNumber === 1}
+        onClick={() => {
+          if(pageNumber > 1){
+            setPageNumber(pageNumber-1)
+          }
+        }}
+        >
+        Previous
+        </button>
+        <button
+        disabled = {pageNumber >= (numPages ?? 1)}
+        onClick={() => {
+          if (numPages && pageNumber < numPages){
+            setPageNumber(pageNumber+1)
+          }
+        }}
+        >
+        Next
+        </button>
+      </div>
 
+      
       {numPages && (
         <div className="mt-4 text-sm text-gray-600">
-          Pages: {numPages}
+          <div>
+            Page {pageNumber}/{numPages}
+          </div>
         </div>
       )}
 
