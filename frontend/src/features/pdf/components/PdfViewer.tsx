@@ -1,19 +1,12 @@
-type Props = {
-  file: string | null;
-};
+"use client";
 
-export default function PdfViewer({ file }: Props) {
-  if (!file) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        Upload a PDF
-      </div>
-    );
+import dynamic from "next/dynamic";
+
+const PdfViewerClient = dynamic(
+  () => import("./PdfViewerClient"),
+  {
+    ssr: false,
   }
+);
 
-  return (
-    <div className="flex-1">
-      PDF goes here
-    </div>
-  );
-}
+export default PdfViewerClient;

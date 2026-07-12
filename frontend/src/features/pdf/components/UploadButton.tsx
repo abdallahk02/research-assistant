@@ -12,8 +12,7 @@ export default function UploadButton({ onUpload }: Props) {
 
     const url = URL.createObjectURL(file);
 
-    onUpload(url);
-  };
+    onUpload(URL.createObjectURL(file));  };
 
   return (
     <input

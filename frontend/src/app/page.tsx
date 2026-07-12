@@ -10,6 +10,8 @@ import AiPanel from "@/features/pdf/components/AiPanel";
 export default function Home() {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
 
+  <PdfViewer file={fileUrl} />
+
   return (
     <div className="grid grid-cols-[260px_1fr_350px] h-screen">
       <aside className="border-r p-4">
