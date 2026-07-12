@@ -20,7 +20,6 @@ export default function Home() {
       </aside>
 
       <main className="flex flex-col">
-        <PdfToolbar />
         <PdfViewer file={fileUrl} />
       </main>
 

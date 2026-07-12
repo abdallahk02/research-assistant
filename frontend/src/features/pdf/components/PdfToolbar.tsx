@@ -1,13 +1,41 @@
-export default function PdfToolbar() {
+"use client";
+
+type Props = {
+  pageNumber: number;
+  numPages: number | null;
+  onPrevious: () => void;
+  onNext: () => void;
+};
+
+export default function PdfToolbar({
+  pageNumber,
+  numPages,
+  onPrevious,
+  onNext,
+}: Props) {
   return (
-    <div className="flex gap-2 border-b p-3">
-      <button>Previous</button>
+    <div className="flex items-center justify-center gap-4 border-b p-3">
 
-      <button>Next</button>
+      <button
+        disabled={pageNumber === 1}
+        onClick={onPrevious}
+        className="rounded border px-3 py-1 disabled:opacity-50"
+      >
+        Previous
+      </button>
 
-      <button>+</button>
+      <span>
+        Page {pageNumber} / {numPages ?? "--"}
+      </span>
 
-      <button>-</button>
+      <button
+        disabled={pageNumber >= (numPages ?? 1)}
+        onClick={onNext}
+        className="rounded border px-3 py-1 disabled:opacity-50"
+      >
+        Next
+      </button>
+
     </div>
   );
 }

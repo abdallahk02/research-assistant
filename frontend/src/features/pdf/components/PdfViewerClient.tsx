@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useEffect } from 'react';
+import { useEffect, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import PdfToolbar from "./PdfToolbar";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -14,7 +14,7 @@ type Props = {
   file: string | null;
 };
 
-export default function PdfViewer({ file }: Props) {
+export default function PdfViewerClient({ file }: Props) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +29,9 @@ export default function PdfViewer({ file }: Props) {
     setLoading(false);
     setError(null);
 
+    // Reset to first page when a new PDF loads
+    setPageNumber(1);
+
     console.log(`Loaded PDF with ${numPages} pages`);
   }
 
@@ -37,26 +40,34 @@ export default function PdfViewer({ file }: Props) {
     setError("Unable to load PDF.");
   }
 
-  useEffect(() => {
-  function handleKeyDown(event: KeyboardEvent) {
-    if (event.key === "ArrowRight") {
-      if (numPages && pageNumber < numPages) {
-        setPageNumber(pageNumber + 1);
-      }
-    }
-
-    if (event.key === "ArrowLeft") {
-      if (pageNumber > 1) {
-        setPageNumber(pageNumber - 1);
-      }
+  function goToNextPage() {
+    if (numPages && pageNumber < numPages) {
+      setPageNumber((prev) => prev + 1);
     }
   }
 
-  window.addEventListener("keydown", handleKeyDown);
+  function goToPreviousPage() {
+    if (pageNumber > 1) {
+      setPageNumber((prev) => prev - 1);
+    }
+  }
 
-  return () => {
-    window.removeEventListener("keydown", handleKeyDown);
-  };
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "ArrowRight") {
+        goToNextPage();
+      }
+
+      if (event.key === "ArrowLeft") {
+        goToPreviousPage();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [pageNumber, numPages]);
 
   if (!file) {
@@ -68,7 +79,7 @@ export default function PdfViewer({ file }: Props) {
   }
 
   return (
-    <div className="flex h-full flex-col items-center overflow-auto p-4">
+    <div className="flex h-full flex-col overflow-auto p-4">
 
       {loading && (
         <div className="mb-4 text-gray-500">
@@ -82,53 +93,31 @@ export default function PdfViewer({ file }: Props) {
         </div>
       )}
 
-      <Document
-        file={file}
-        onLoadSuccess={onDocumentLoadSuccess}
-        onLoadError={onDocumentLoadError}
-        loading={
-          <div>
-            Loading document...
-          </div>
-        }
-        onSourceSuccess={() => setLoading(true)}
-      >
-        <Page
-          pageNumber={pageNumber}
-          width={700}
-        />
-      </Document>
-      <div>
-        <button
-        disabled={pageNumber === 1}
-        onClick={() => {
-          if(pageNumber > 1){
-            setPageNumber(pageNumber-1)
-          }
-        }}
-        >
-        Previous
-        </button>
-        <button
-        disabled = {pageNumber >= (numPages ?? 1)}
-        onClick={() => {
-          if (numPages && pageNumber < numPages){
-            setPageNumber(pageNumber+1)
-          }
-        }}
-        >
-        Next
-        </button>
-      </div>
+      <PdfToolbar
+        pageNumber={pageNumber}
+        numPages={numPages}
+        onPrevious={goToPreviousPage}
+        onNext={goToNextPage}
+      />
 
-      
-      {numPages && (
-        <div className="mt-4 text-sm text-gray-600">
-          <div>
-            Page {pageNumber}/{numPages}
-          </div>
-        </div>
-      )}
+      <div className="flex justify-center p-4">
+        <Document
+          file={file}
+          onLoadSuccess={onDocumentLoadSuccess}
+          onLoadError={onDocumentLoadError}
+          loading={
+            <div>
+              Loading document...
+            </div>
+          }
+          onSourceSuccess={() => setLoading(true)}
+        >
+          <Page
+            pageNumber={pageNumber}
+            width={700}
+          />
+        </Document>
+      </div>
 
     </div>
   );
