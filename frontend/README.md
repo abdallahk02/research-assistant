@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Research Assistant frontend
+
+The Next.js interface for the Research Assistant workspace. See the repository-level README for full setup instructions.
 
 ## Getting Started
 

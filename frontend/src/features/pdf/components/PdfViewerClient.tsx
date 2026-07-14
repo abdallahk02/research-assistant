@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import PdfToolbar from "./PdfToolbar";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -18,9 +17,6 @@ export default function PdfViewerClient({ file }: Props) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [containerWidth, setContainerWidth] = useState(700);
-  const pageWidth = Math.min(containerWidth, 900);
 
   function onDocumentLoadSuccess({
     numPages,
@@ -31,7 +27,6 @@ export default function PdfViewerClient({ file }: Props) {
     setLoading(false);
     setError(null);
 
-    console.log(`Loaded PDF with ${numPages} pages`);
   }
 
   function onDocumentLoadError() {
@@ -39,59 +34,36 @@ export default function PdfViewerClient({ file }: Props) {
     setError("Unable to load PDF.");
   }
 
-  useEffect(() => {
-    const container = containerRef.current;
-
-    if (!container) {
-      return;
-    }
-
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-
-      if (!entry) {
-        return;
-      }
-
-      const availableWidth = entry.contentRect.width;
-
-      // Leave room for padding around the PDF.
-      setContainerWidth(Math.max(320, availableWidth - 64));
-    });
-
-    observer.observe(container);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
   if (!file) {
     return (
-      <div className="flex h-full items-center justify-center text-gray-500">
-        Upload a PDF to begin
+      <div className="flex h-full items-center justify-center p-6 text-center">
+        <div className="max-w-sm rounded-xl border border-dashed border-zinc-600 bg-zinc-900/40 px-8 py-10">
+          <p className="font-medium text-zinc-200">No paper open</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            Upload a PDF to start reading and exploring your research.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 overflow-auto p-4">
+    <div className="flex h-full min-h-0 flex-col">
 
       {loading && (
-        <div className="mb-4 text-gray-500">
+        <div className="border-b border-zinc-700 px-4 py-2 text-center text-sm text-zinc-400">
           Loading PDF...
         </div>
       )}
 
       {error && (
-        <div className="mb-4 text-red-500">
+        <div className="border-b border-red-900/50 bg-red-950/30 px-4 py-2 text-center text-sm text-red-400">
           {error}
         </div>
       )}
 
       <div
-        ref={containerRef}
-        className="flex min-h-full w-full justify-center px-8 py-8"
+        className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8"
       >
         <Document
           file={file}
@@ -99,17 +71,16 @@ export default function PdfViewerClient({ file }: Props) {
           onLoadError={onDocumentLoadError}
           loading={<div>Loading document...</div>}
           onSourceSuccess={() => setLoading(true)}
-          className="flex flex-col items-center"
+          className="flex min-w-fit flex-col items-center"
         >
           {numPages &&
             Array.from({ length: numPages }, (_, index) => (
               <div
                 key={index + 1}
-                className="mb-8 overflow-hidden rounded-md bg-white shadow-2xl"
+                className="mb-6 overflow-hidden rounded-sm bg-white shadow-2xl last:mb-0 sm:mb-8"
               >
                 <Page
                   pageNumber={index + 1}
-                  width={pageWidth}
                 />
               </div>
             ))}
