@@ -6,11 +6,12 @@ import PdfViewer from "@/features/pdf/components/PdfViewer";
 import PdfToolbar from "@/features/pdf/components/PdfToolbar";
 import UploadButton from "@/features/pdf/components/UploadButton";
 import AiPanel from "@/features/pdf/components/AiPanel";
+import PdfWorkspace from "@/features/pdf/components/PdfWorkspace";
 
 export default function Home() {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
 
-  <PdfViewer file={fileUrl} />
+  <PdfWorkspace file={fileUrl} />
 
   return (
     <div className="grid grid-cols-[260px_1fr_350px] h-screen">

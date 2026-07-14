@@ -18,7 +18,6 @@ export default function PdfViewerClient({ file }: Props) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
 
   function onDocumentLoadSuccess({
     numPages,
@@ -29,9 +28,6 @@ export default function PdfViewerClient({ file }: Props) {
     setLoading(false);
     setError(null);
 
-    // Reset to first page when a new PDF loads
-    setPageNumber(1);
-
     console.log(`Loaded PDF with ${numPages} pages`);
   }
 
@@ -39,36 +35,6 @@ export default function PdfViewerClient({ file }: Props) {
     setLoading(false);
     setError("Unable to load PDF.");
   }
-
-  function goToNextPage() {
-    if (numPages && pageNumber < numPages) {
-      setPageNumber((prev) => prev + 1);
-    }
-  }
-
-  function goToPreviousPage() {
-    if (pageNumber > 1) {
-      setPageNumber((prev) => prev - 1);
-    }
-  }
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "ArrowRight") {
-        goToNextPage();
-      }
-
-      if (event.key === "ArrowLeft") {
-        goToPreviousPage();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [pageNumber, numPages]);
 
   if (!file) {
     return (
@@ -79,7 +45,7 @@ export default function PdfViewerClient({ file }: Props) {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-auto p-4">
+    <div className="flex flex-col items-center gap-4 overflow-auto p-4">
 
       {loading && (
         <div className="mb-4 text-gray-500">
@@ -93,14 +59,7 @@ export default function PdfViewerClient({ file }: Props) {
         </div>
       )}
 
-      <PdfToolbar
-        pageNumber={pageNumber}
-        numPages={numPages}
-        onPrevious={goToPreviousPage}
-        onNext={goToNextPage}
-      />
-
-      <div className="flex justify-center p-4">
+      <div className="flex flex-col items-center p-6">
         <Document
           file={file}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -112,10 +71,17 @@ export default function PdfViewerClient({ file }: Props) {
           }
           onSourceSuccess={() => setLoading(true)}
         >
-          <Page
-            pageNumber={pageNumber}
-            width={700}
-          />
+          {numPages &&
+            Array.from({ length: numPages }, (_, index) => (
+              <div 
+                key={index + 1}
+                className="mb-8 rounded-lg shadow-2xl">
+                <Page
+                  pageNumber={index + 1}
+                  width={700}
+                />
+              </div>
+            ))}
         </Document>
       </div>
 
