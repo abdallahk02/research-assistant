@@ -1,32 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import PaperSidebar from "@/features/pdf/components/PaperSidebar";
-import PdfViewer from "@/features/pdf/components/PdfViewer";
-import PdfToolbar from "@/features/pdf/components/PdfToolbar";
-import UploadButton from "@/features/pdf/components/UploadButton";
-import AiPanel from "@/features/pdf/components/AiPanel";
 import PdfWorkspace from "@/features/pdf/components/PdfWorkspace";
 
 export default function Home() {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
 
-  <PdfWorkspace file={fileUrl} />
+  function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (file.type !== "application/pdf") {
+      alert("Please select a PDF file.");
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setFileUrl(url);
+  }
 
   return (
-    <div className="grid grid-cols-[260px_1fr_350px] h-screen">
-      <aside className="border-r p-4">
-        <UploadButton onUpload={setFileUrl} />
-        <PaperSidebar />
-      </aside>
-
-      <main className="flex flex-col">
-        <PdfViewer file={fileUrl} />
-      </main>
-
-      <aside className="border-l p-4">
-        <AiPanel />
-      </aside>
-    </div>
+    <main className="h-screen w-screen overflow-hidden">
+      <PdfWorkspace
+        file={fileUrl}
+        onUpload={handleUpload}
+      />
+    </main>
   );
 }

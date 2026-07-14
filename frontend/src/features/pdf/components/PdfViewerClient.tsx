@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import PdfToolbar from "./PdfToolbar";
 
@@ -18,6 +18,9 @@ export default function PdfViewerClient({ file }: Props) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState(700);
+  const pageWidth = Math.min(containerWidth, 900);
 
   function onDocumentLoadSuccess({
     numPages,
@@ -35,6 +38,33 @@ export default function PdfViewerClient({ file }: Props) {
     setLoading(false);
     setError("Unable to load PDF.");
   }
+
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+
+      if (!entry) {
+        return;
+      }
+
+      const availableWidth = entry.contentRect.width;
+
+      // Leave room for padding around the PDF.
+      setContainerWidth(Math.max(320, availableWidth - 64));
+    });
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   if (!file) {
     return (
@@ -59,26 +89,27 @@ export default function PdfViewerClient({ file }: Props) {
         </div>
       )}
 
-      <div className="flex flex-col items-center p-6">
+      <div
+        ref={containerRef}
+        className="flex min-h-full w-full justify-center px-8 py-8"
+      >
         <Document
           file={file}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
-          loading={
-            <div>
-              Loading document...
-            </div>
-          }
+          loading={<div>Loading document...</div>}
           onSourceSuccess={() => setLoading(true)}
+          className="flex flex-col items-center"
         >
           {numPages &&
             Array.from({ length: numPages }, (_, index) => (
-              <div 
+              <div
                 key={index + 1}
-                className="mb-8 rounded-lg shadow-2xl">
+                className="mb-8 overflow-hidden rounded-md bg-white shadow-2xl"
+              >
                 <Page
                   pageNumber={index + 1}
-                  width={700}
+                  width={pageWidth}
                 />
               </div>
             ))}
