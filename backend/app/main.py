@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from uuid import uuid4
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.services.pdf_parser import extract_pdf_pages
 from app.services.chunker import chunk_pdf_pages
@@ -15,6 +16,17 @@ load_dotenv()
 app = FastAPI(
     title="Research Assistant API",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 class DocumentSearchRequest(BaseModel):
