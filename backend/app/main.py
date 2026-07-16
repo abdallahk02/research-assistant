@@ -1,11 +1,16 @@
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from uuid import uuid4
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
 
 from app.services.pdf_parser import extract_pdf_pages
 from app.services.chunker import chunk_pdf_pages
 from app.services.embedding_service import embed_chunks
 from app.services.vector_store import store_document_chunks, search_document
+from app.services.rag_service import ask_document
+from app.services.llm_service import LLMServiceError
+
+load_dotenv()
 
 app = FastAPI(
     title="Research Assistant API",
@@ -16,6 +21,22 @@ class DocumentSearchRequest(BaseModel):
     document_id: str
     query: str
     limit: int = Field(default=5, ge=1, le=20)
+
+class AskDocumentRequest(BaseModel):
+    document_id: str = Field(min_length=1)
+    question: str = Field(min_length=1)
+    limit: int = Field(default=5, ge=1, le=20)
+
+class AskSourceResponse(BaseModel):
+    chunk_id: int
+    page_number: int
+    text: str
+    distance: float
+
+
+class AskDocumentResponse(BaseModel):
+    answer: str
+    sources: list[AskSourceResponse]
 
 @app.get("/health")
 def health_check() -> dict[str, str]:
@@ -101,3 +122,40 @@ def search_stored_document(
             for result in results
         ],
     }
+
+@app.post(
+    "/documents/ask",
+    response_model=AskDocumentResponse,
+)
+def ask_document_endpoint(
+    request: AskDocumentRequest,
+) -> AskDocumentResponse:
+    try:
+        result = ask_document(
+            document_id=request.document_id,
+            question=request.question,
+            limit=request.limit,
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        ) from error
+    except LLMServiceError as error:
+        raise HTTPException(
+            status_code=502,
+            detail=str(error),
+        ) from error
+
+    return AskDocumentResponse(
+        answer=result.answer,
+        sources=[
+            AskSourceResponse(
+                chunk_id=source.chunk_id,
+                page_number=source.page_number,
+                text=source.text,
+                distance=source.distance,
+            )
+            for source in result.sources
+        ],
+    )
