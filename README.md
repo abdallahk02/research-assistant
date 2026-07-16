@@ -1,46 +1,35 @@
-# Research Assistant
+# AI Research Assistant
 
-A local workspace for reading research PDFs and, eventually, exploring them with AI. The app currently includes a Next.js PDF workspace, a FastAPI service, and PostgreSQL with pgvector.
+An AI-powered research assistant for interacting with PDF documents using Retrieval-Augmented Generation (RAG). The project is designed as a production-quality portfolio application, emphasizing clean architecture, modular services, and an intuitive document reading experience.
 
-## Requirements
+## Features
 
-- Node.js 20 or newer
-- Python 3.11 or newer
-- Docker (for PostgreSQL)
+* Modern PDF viewer built with Next.js and React
+* PDF text extraction using PyMuPDF
+* Overlapping text chunking for semantic retrieval
+* Local embeddings with Sentence Transformers (`all-MiniLM-L6-v2`)
+* Persistent vector storage with ChromaDB
+* Semantic document search
+* AI-powered question answering with cited source pages
+* FastAPI backend with modular service architecture
 
-## Setup
+## Tech Stack
 
-Start the database from the repository root:
+### Frontend
 
-```bash
-docker compose up -d
-```
+* Next.js 16
+* React 19
+* TypeScript
+* Tailwind CSS
+* React-PDF (PDF.js)
 
-Start the backend:
+### Backend
 
-```bash
-cd backend
-python -m venv .venv
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-Start the frontend in a second terminal:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open http://localhost:3000. The API health endpoint is available at http://localhost:8000/health.
-
-## Checks
-
-```bash
-cd frontend
-npm run lint
-npm run build
-```
+* FastAPI
+* PyMuPDF
+* Sentence Transformers
+* ChromaDB
+* Python 3.12
+* Groq API (LLM)
+* Document annotations
+* Document comparison
