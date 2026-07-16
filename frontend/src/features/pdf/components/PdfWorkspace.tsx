@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import PdfViewer from "./PdfViewer";
 
 type Props = {
@@ -13,11 +15,22 @@ export default function PdfWorkspace({
   fileName,
   onUpload,
 }: Props) {
+  
+  const [targetPage, setTargetPage] = useState<number | null>(null);
+
+
+  function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    onUpload(event);
+  }
+
   return (
     <div className="flex h-full w-full flex-col bg-zinc-950 text-zinc-100">
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-900 px-4 sm:px-6">
         <div className="min-w-0">
-          <h1 className="font-semibold tracking-tight">Research Assistant</h1>
+          <h1 className="font-semibold tracking-tight">
+            Research Assistant
+          </h1>
+
           {fileName && (
             <p className="max-w-48 truncate text-xs text-zinc-500 sm:max-w-sm">
               {fileName}
@@ -31,24 +44,15 @@ export default function PdfWorkspace({
           <input
             type="file"
             accept="application/pdf"
-            onChange={onUpload}
+            onChange={handleUpload}
             className="hidden"
           />
         </label>
       </header>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <aside className="hidden w-56 shrink-0 border-r border-zinc-800 bg-zinc-900 p-5 lg:block xl:w-64">
-          <h2 className="text-sm font-medium text-zinc-300">
-            Outline
-          </h2>
 
-          <p className="mt-4 text-sm text-zinc-500">
-            No outline available
-          </p>
-        </aside>
-
-        <main className="min-w-0 flex-1 overflow-hidden bg-zinc-800">
+        <main className="min-w-0 flex-1 overflow-hidden bg-zinc-950">
           <PdfViewer file={file} />
         </main>
 
