@@ -2,14 +2,12 @@
 frontend/node_modules
 frontend/.next
 
-# Python
-backend/.venv
-
-# Environment Variables
+# Backend
 backend/.env
 backend/.venv/
 backend/__pycache__/
 backend/**/*.pyc
+backend/data/chroma/
 
 # IDE
 .vscode
