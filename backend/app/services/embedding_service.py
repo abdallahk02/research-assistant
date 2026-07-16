@@ -32,3 +32,18 @@ def embed_chunks(chunks: list[TextChunk]) -> list[list[float]]:
     )
 
     return embeddings.tolist()
+
+def embed_query(query: str) -> list[float]:
+    cleaned_query = query.strip()
+
+    if not cleaned_query:
+        raise ValueError("Query cannot be empty.")
+
+    model = get_embedding_model()
+
+    embedding = model.encode(
+        cleaned_query,
+        normalize_embeddings=True,
+    )
+
+    return embedding.tolist()
