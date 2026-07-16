@@ -28,7 +28,7 @@ export default function PdfWorkspace({
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-900 px-4 sm:px-6">
         <div className="min-w-0">
           <h1 className="font-semibold tracking-tight">
-            Research Assistant
+            FOUNDATION
           </h1>
 
           {fileName && (
