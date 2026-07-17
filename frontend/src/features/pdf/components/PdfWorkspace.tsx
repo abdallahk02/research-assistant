@@ -34,6 +34,7 @@ export default function PdfWorkspace({
   const [sources, setSources] = useState<AskSource[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [askError, setAskError] = useState<string | null>(null);
+  const [targetPage, setTargetPage] = useState<number | null>(null);
 
   async function handleUpload(
     event: ChangeEvent<HTMLInputElement>,
@@ -55,6 +56,7 @@ export default function PdfWorkspace({
     setAskError(null);
     setProcessingError(null);
     setIsProcessing(true);
+    setTargetPage(null);
 
     try {
       const result = await extractDocument(selectedFile);
@@ -100,6 +102,22 @@ export default function PdfWorkspace({
     }
   }
 
+  function handleQuestionKeyDown(
+    event: React.KeyboardEvent<HTMLTextAreaElement>,
+  ) {
+    if (event.key !== "Enter" || event.shiftKey) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (!canAsk) {
+      return;
+    }
+
+    event.currentTarget.form?.requestSubmit();
+  }
+
   const canAsk =
     documentId !== null &&
     question.trim().length > 0 &&
@@ -134,7 +152,9 @@ export default function PdfWorkspace({
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <main className="min-w-0 flex-1 overflow-hidden bg-zinc-950">
-          <PdfViewer file={file} />
+          <PdfViewer 
+            file={file}
+            targetPage={targetPage} />
         </main>
 
         <aside className="hidden w-72 shrink-0 flex-col border-l border-zinc-800 bg-zinc-900 md:flex xl:w-80">
@@ -190,9 +210,11 @@ export default function PdfWorkspace({
 
                 <div className="mt-3 space-y-3">
                   {sources.map((source) => (
-                    <article
+                    <button
                       key={source.chunk_id}
-                      className="rounded-lg border border-zinc-800 bg-zinc-950 p-3"
+                      type="button"
+                      onClick={() => setTargetPage(source.page_number)}
+                      className="w-full rounded-lg border border-zinc-800 bg-zinc-950 p-3 text-left transition-colors hover:border-zinc-600 hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-500"
                     >
                       <p className="text-xs font-medium text-zinc-300">
                         Page {source.page_number}
@@ -201,7 +223,7 @@ export default function PdfWorkspace({
                       <p className="mt-2 line-clamp-4 text-xs leading-5 text-zinc-500">
                         {source.text}
                       </p>
-                    </article>
+                    </button>
                   ))}
                 </div>
               </section>
@@ -223,6 +245,7 @@ export default function PdfWorkspace({
               id="document-question"
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
+              onKeyDown={handleQuestionKeyDown}
               placeholder={
                 documentId
                   ? "Ask about this document..."
@@ -232,7 +255,6 @@ export default function PdfWorkspace({
               rows={3}
               className="w-full resize-none rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50"
             />
-
             <button
               type="submit"
               disabled={!canAsk}

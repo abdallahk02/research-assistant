@@ -11,14 +11,17 @@ const PdfViewerClient = dynamic(
 
 type Props = {
   file: string | null;
+  targetPage: number | null;
 };
 
 export default function PdfViewer({
   file,
+  targetPage,
 }: Props) {
   return (
     <PdfViewerClient
       file={file}
+      targetPage={targetPage}
     />
   );
 }

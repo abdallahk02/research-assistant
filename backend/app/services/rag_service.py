@@ -28,8 +28,7 @@ def build_context(search_results: list[SearchResult]) -> str:
 
     for index, result in enumerate(search_results, start=1):
         block = (
-            f"[Source {index}]\n"
-            f"Page: {result.page_number}\n"
+            f"[Page {result.page_number}]\n"
             f"Chunk ID: {result.chunk_id}\n"
             f"Content:\n{result.text}"
         )

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -10,15 +10,20 @@ pdfjs.GlobalWorkerOptions.workerSrc =
 
 type Props = {
   file: string | null;
+  targetPage: number | null;
 };
 
 
 export default function PdfViewerClient({
   file,
+  targetPage
 }: Props) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pageRefs = useRef<Map<number, HTMLDivElement>>(
+    new Map(),
+  );
   
 
   useEffect(() => {
@@ -26,6 +31,23 @@ export default function PdfViewerClient({
     setNumPages(null);
     setError(null);
   }, [file]);
+
+  useEffect(() => {
+    if (targetPage === null) {
+      return;
+    }
+
+    const pageElement = pageRefs.current.get(targetPage);
+
+    if (!pageElement) {
+      return;
+    }
+
+    pageElement.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [targetPage, numPages]);
 
   function onDocumentLoadSuccess({
     numPages,
@@ -73,36 +95,42 @@ export default function PdfViewerClient({
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
+      <div className="h-full overflow-y-auto">
         <Document
-          key={file}
           file={file}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
-          onSourceSuccess={() => {
-            setLoading(true);
-            setError(null);
-          }}
-          loading={
-            <div className="py-8 text-sm text-zinc-400">
-              Loading document...
-            </div>
-          }
-          className="flex min-w-fit flex-col items-center"
         >
-          {numPages &&
-            Array.from({ length: numPages }, (_, index) => {
-              const pageNumber = index + 1;
+          <div className="flex flex-col items-center gap-8 py-8">
+            {Array.from(
+              { length: numPages ?? 0 },
+              (_, index) => {
+                const pageNumber = index + 1;
 
-              return (
-                <div
-                  key={pageNumber}
-                  className="mb-6 overflow-hidden rounded-sm bg-white shadow-2xl last:mb-0 sm:mb-8"
-                >
-                  <Page pageNumber={pageNumber} />
-                </div>
-              );
-            })}
+                return (
+                  <div
+                    key={pageNumber}
+                    ref={(element) => {
+                      if (element) {
+                        pageRefs.current.set(
+                          pageNumber,
+                          element,
+                        );
+                      } else {
+                        pageRefs.current.delete(pageNumber);
+                      }
+                    }}
+                    className="scroll-mt-6"
+                  >
+                    <Page
+                      pageNumber={pageNumber}
+                      width={700}
+                    />
+                  </div>
+                );
+              },
+            )}
+          </div>
         </Document>
       </div>
     </div>

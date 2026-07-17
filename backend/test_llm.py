@@ -22,7 +22,7 @@ The model achieved 91 percent accuracy on the validation dataset.
 
 
 answer = generate_answer(
-    question="Who funded this research?",
+    question="What accuracy score was acheived?",
     context=context,
 )
 
