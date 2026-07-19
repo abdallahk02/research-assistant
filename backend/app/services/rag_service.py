@@ -1,10 +1,11 @@
 from dataclasses import dataclass
+from typing import Literal
 
 from app.services.vector_store import SearchResult, search_document
 from app.services.llm_service import generate_answer
 
 DEFAULT_RETRIEVAL_LIMIT = 5
-
+MAX_HISTORY_MESSAGES = 10
 
 @dataclass(frozen=True)
 class RagSource:
@@ -18,6 +19,34 @@ class RagSource:
 class RagResponse:
     answer: str
     sources: list[RagSource]
+
+@dataclass(frozen=True)
+class ChatMessage:
+    role: Literal["user", "assistant"]
+    content: str
+
+def prepare_history(history: list[ChatMessage]) -> list[dict[str, str]]:
+    """
+    Validate and limit conversation history before sending it to the LLM.
+    """
+    recent_history = history[-MAX_HISTORY_MESSAGES:]
+
+    prepared_history: list[dict[str, str]] = []
+
+    for message in recent_history:
+        content = message.content.strip()
+
+        if not content:
+            continue
+
+        prepared_history.append(
+            {
+                "role": message.role,
+                "content": content
+            }
+        )
+
+    return prepared_history
 
 
 def build_context(search_results: list[SearchResult]) -> str:
@@ -58,6 +87,7 @@ def ask_document(
     document_id: str,
     question: str,
     limit: int = DEFAULT_RETRIEVAL_LIMIT,
+    history: list[ChatMessage] | None=None
 ) -> RagResponse:
     """
     Answer a question using chunks retrieved from a specific document.
@@ -88,9 +118,12 @@ def ask_document(
 
     context = build_context(search_results)
 
+    llm_history = prepare_history(history or [])
+
     answer = generate_answer(
         question=normalized_question,
         context=context,
+        history=llm_history
     )
 
     sources = build_sources(search_results)

@@ -3,12 +3,13 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Literal
 
 from app.services.pdf_parser import extract_pdf_pages
 from app.services.chunker import chunk_pdf_pages
 from app.services.embedding_service import embed_chunks
 from app.services.vector_store import store_document_chunks, search_document
-from app.services.rag_service import ask_document
+from app.services.rag_service import ask_document, ChatMessage
 from app.services.llm_service import LLMServiceError
 
 load_dotenv()
@@ -38,6 +39,10 @@ class AskDocumentRequest(BaseModel):
     document_id: str = Field(min_length=1)
     question: str = Field(min_length=1)
     limit: int = Field(default=5, ge=1, le=20)
+    history: list[ChatMessageRequest] = Field(
+        default_factory=list,
+        max_length=20
+    )
 
 class AskSourceResponse(BaseModel):
     chunk_id: int
@@ -45,10 +50,13 @@ class AskSourceResponse(BaseModel):
     text: str
     distance: float
 
-
 class AskDocumentResponse(BaseModel):
     answer: str
     sources: list[AskSourceResponse]
+
+class ChatMessageRequest(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=10_000)
 
 @app.get("/health")
 def health_check() -> dict[str, str]:
@@ -147,6 +155,13 @@ def ask_document_endpoint(
             document_id=request.document_id,
             question=request.question,
             limit=request.limit,
+            history = [
+                ChatMessage(
+                    role=message.role,
+                    content=message.content
+                )
+                for message in request.history
+            ]
         )
     except ValueError as error:
         raise HTTPException(

@@ -1,5 +1,6 @@
 import os
 from functools import lru_cache
+from typing import Literal, TypedDict
 
 from openai import OpenAI
 
@@ -26,6 +27,10 @@ Follow these rules:
 
 class LLMServiceError(RuntimeError):
     """Raised when the language model cannot produce an answer."""
+
+class LLMMessage(TypedDict):
+    role: Literal["system", "user", "assistant"]
+    content: str
 
 
 @lru_cache(maxsize=1)
@@ -60,7 +65,7 @@ def build_llm_input(question: str, context: str) -> str:
     )
 
 
-def generate_answer(question: str, context: str) -> str:
+def generate_answer(question: str, context: str, history: list[LLMMessage] | None=None) -> str:
     """
     Generate a grounded answer using retrieved document context.
     """
@@ -75,24 +80,25 @@ def generate_answer(question: str, context: str) -> str:
 
     client = get_llm_client()
     model = get_llm_model()
-    llm_input = build_llm_input(
-        question=normalized_question,
-        context=normalized_context,
+
+    messages: list[LLMMessage] = [{'role':'system',
+                                   'content': SYSTEM_INSTRUCTIONS}]
+    
+    if history:
+        messages.extend(history)
+
+    messages.append(
+        {'role':'user',
+         'content': build_llm_input(
+             question=normalized_question,
+             context=normalized_context)
+        }
     )
 
     try:
         response = client.chat.completions.create(
             model=model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": SYSTEM_INSTRUCTIONS,
-                },
-                {
-                    "role": "user",
-                    "content": llm_input,
-                },
-            ],  
+            messages=messages  
         )
     except Exception as error:
         raise LLMServiceError(

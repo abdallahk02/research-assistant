@@ -43,6 +43,7 @@ export async function askDocument(
         document_id: request.document_id,
         question: request.question,
         limit: request.limit ?? 5,
+        history: request.history ?? [],
       }),
     },
   );
