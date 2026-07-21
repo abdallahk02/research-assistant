@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type {
   ChangeEvent,
   KeyboardEvent,
@@ -54,6 +54,17 @@ export default function PdfWorkspace({
 
   const [askError, setAskError] =
     useState<string | null>(null);
+  
+  const latestAssistantMessageRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const MIN_ASSISTANT_WIDTH = 280;
+  const MAX_ASSISTANT_WIDTH = 640;
+
+  const [assistantWidth, setAssistantWidth] =
+    useState(320);
+
+  const isResizingRef = useRef(false);
 
   async function handleUpload(
     event: ChangeEvent<HTMLInputElement>,
@@ -191,6 +202,70 @@ export default function PdfWorkspace({
     question.trim().length > 0 &&
     !isAsking &&
     !isProcessing;
+  
+  useEffect(() => {
+    if (!isAsking) {
+      latestAssistantMessageRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [messages, isAsking]);
+
+  function handleResizeStart(
+    event: React.PointerEvent<HTMLDivElement>,
+  ) {
+    event.preventDefault();
+
+    isResizingRef.current = true;
+    event.currentTarget.setPointerCapture(
+      event.pointerId,
+    );
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }
+
+  function handleResizeMove(
+    event: React.PointerEvent<HTMLDivElement>,
+  ) {
+    if (!isResizingRef.current) {
+      return;
+    }
+
+    const nextWidth =
+      window.innerWidth - event.clientX;
+
+    const constrainedWidth = Math.min(
+      MAX_ASSISTANT_WIDTH,
+      Math.max(MIN_ASSISTANT_WIDTH, nextWidth),
+    );
+
+    setAssistantWidth(constrainedWidth);
+  }
+
+  function handleResizeEnd(
+    event: React.PointerEvent<HTMLDivElement>,
+  ) {
+    if (!isResizingRef.current) {
+      return;
+    }
+
+    isResizingRef.current = false;
+
+    if (
+      event.currentTarget.hasPointerCapture(
+        event.pointerId,
+      )
+    ) {
+      event.currentTarget.releasePointerCapture(
+        event.pointerId,
+      );
+    }
+
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  }
 
   return (
     <div className="flex h-full w-full flex-col bg-zinc-950 text-zinc-100">
@@ -228,8 +303,25 @@ export default function PdfWorkspace({
             targetPage={targetPage}
           />
         </main>
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize assistant panel"
+          onPointerDown={handleResizeStart}
+          onPointerMove={handleResizeMove}
+          onPointerUp={handleResizeEnd}
+          onPointerCancel={handleResizeEnd}
+          className="group relative hidden w-1 shrink-0 cursor-col-resize bg-zinc-800 md:block"
+        >
+          <div className="absolute inset-y-0 left-1/2 w-1 -translate-x-1/2 transition-colors group-hover:bg-zinc-500" />
+        </div>
 
-        <aside className="hidden w-72 shrink-0 flex-col border-l border-zinc-800 bg-zinc-900 md:flex xl:w-80">
+        <aside 
+          style={{
+            width: assistantWidth,
+          }}
+          className="hidden shrink-0 flex-col bg-zinc-900 md:flex"
+        >
           <div className="shrink-0 border-b border-zinc-800 p-5">
             <h2 className="text-sm font-medium text-zinc-300">
               AI Assistant
@@ -271,9 +363,21 @@ export default function PdfWorkspace({
               )}
 
             <div className="space-y-6">
-              {messages.map((message) => (
+              {messages.map((message, index) => {
+                const isLatestAssistant =
+                  message.role === "assistant" &&
+                  index ===
+                    messages.findLastIndex(
+                      (m) => m.role === "assistant",
+                    ); 
+                return(
                 <article
                   key={message.id}
+                  ref={
+                    isLatestAssistant
+                      ? latestAssistantMessageRef
+                      : null
+                  }
                   className={
                     message.role === "user"
                       ? "ml-6 rounded-lg bg-zinc-800 p-3"
@@ -328,7 +432,7 @@ export default function PdfWorkspace({
                       </div>
                     )}
                 </article>
-              ))}
+              )})}
 
               {isAsking && (
                 <div className="mr-2">
