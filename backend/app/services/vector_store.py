@@ -36,6 +36,22 @@ class SearchResult:
     page_number: int
     text: str
     distance: float
+    score: float
+
+    def __init__(self, chunk_id, page_number, text, distance, score=None):
+        self.chunk_id = chunk_id
+        self.page_number = page_number
+        self.text = text
+        self.distance = distance
+        self.score = score
+
+    def to_dict(self):
+        return {'chunk_id':self.chunk_id, 
+                'page_number':self.page_number, 
+                'text':self.text, 
+                'distance':self.distance}
+
+    
 
 
 def store_document_chunks(
@@ -84,7 +100,7 @@ def store_document_chunks(
 def search_document(
     document_id: str,
     query: str,
-    limit: int = 5,
+    limit: int = 20,
 ) -> list[SearchResult]:
     if not document_id.strip():
         raise ValueError("document_id cannot be empty.")

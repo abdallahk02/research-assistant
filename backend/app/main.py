@@ -33,7 +33,7 @@ app.add_middleware(
 class DocumentSearchRequest(BaseModel):
     document_id: str
     query: str
-    limit: int = Field(default=5, ge=1, le=20)
+    limit: int = Field(default=20, ge=1, le=50)
 
 class AskDocumentRequest(BaseModel):
     document_id: str = Field(min_length=1)

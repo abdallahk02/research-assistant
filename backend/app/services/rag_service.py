@@ -1,11 +1,15 @@
 from dataclasses import dataclass
 from typing import Literal
+from flashrank import Ranker, RerankRequest
 
 from app.services.vector_store import SearchResult, search_document
 from app.services.llm_service import generate_answer
 
-DEFAULT_RETRIEVAL_LIMIT = 5
+DEFAULT_RETRIEVAL_LIMIT = 20
+DEFAULT_RERANK_LIMIT = 5
 MAX_HISTORY_MESSAGES = 10
+
+_ranker = None
 
 @dataclass(frozen=True)
 class RagSource:
@@ -116,6 +120,9 @@ def ask_document(
             sources=[],
         )
 
+    search_results = rerank_search_results(normalized_question=normalized_question, 
+                                           search_results=search_results)
+
     context = build_context(search_results)
 
     llm_history = prepare_history(history or [])
@@ -132,3 +139,31 @@ def ask_document(
         answer=answer,
         sources=sources,
     )
+
+
+def get_ranker():
+    global _ranker
+    if _ranker is None:
+        _ranker = Ranker(model_name="ms-marco-MiniLM-L-12-v2", cache_dir="../models")
+    return _ranker
+
+def rerank_search_results(normalized_question: str, 
+                          search_results: list[SearchResult]) -> list[SearchResult]:
+    
+    passages = [r.to_dict() for r in search_results]
+    request = RerankRequest(query=normalized_question, passages=passages)
+    ranker = get_ranker()
+    results = ranker.rerank(request)
+    reranked_results = [SearchResult(d['chunk_id'], 
+                                     d['page_number'], 
+                                     d['text'], 
+                                     d['distance'], 
+                                     d['score']) for d in results]
+
+    if len(reranked_results) > DEFAULT_RERANK_LIMIT:
+       return reranked_results[0:DEFAULT_RERANK_LIMIT] 
+
+    return reranked_results
+    
+
+
