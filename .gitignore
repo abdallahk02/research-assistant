@@ -8,9 +8,14 @@ backend/.venv/
 backend/__pycache__/
 backend/**/*.pyc
 backend/data/chroma/
+backend/app/models
 
 # IDE
 .vscode
 
 # Docker
 postgres_data/
+
+# Flashrank artifacts
+*.onnx
+*.ort
